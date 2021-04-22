@@ -32,9 +32,9 @@ public class TodoController {
         return todoService.create(todo);
     }
 
-    @PutMapping("/{id}/complete")
-    public Mono<Todo> completeById(@PathVariable Long id) {
-        return todoService.completeById(id);
+    @PutMapping("/{id}")
+    public Mono<Todo> completeById(@PathVariable Long id, @RequestBody Todo todo) {
+        return todoService.updateById(id, todo);
     }
 
     @DeleteMapping("/{id}")

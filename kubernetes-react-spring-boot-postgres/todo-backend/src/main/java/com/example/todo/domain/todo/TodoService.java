@@ -11,7 +11,7 @@ public interface TodoService {
 
     Mono<Todo> create(Todo todo);
 
-    Mono<Todo> completeById(Long id);
+    Mono<Todo> updateById(Long id, Todo todo);
 
     Mono<Void> deleteById(Long id);
 

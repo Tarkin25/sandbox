@@ -1,26 +1,40 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: todo-backend
+  name: backend
+  namespace: todo
 spec:
   selector:
     matchLabels:
-      app: todo-backend
+      app: backend
   replicas: 1
   template:
     metadata:
       labels:
-        app: todo-backend
+        app: backend
     spec:
       containers:
-        - name: todo-backend
+        - name: backend
           image: tarkin25/todo-backend
           ports:
             - containerPort: 8080
           env:
             - name: DB_URL
-              value: postgres:5431/todo
+              value: database:5432/todo
             - name: DB_USERNAME
               value: postgres
             - name: DB_PASSWORD
               value: postgres
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: todo
+spec:
+  selector:
+    app: backend
+  ports:
+    - port: 8080
+      protocol: TCP
+      targetPort: 8080

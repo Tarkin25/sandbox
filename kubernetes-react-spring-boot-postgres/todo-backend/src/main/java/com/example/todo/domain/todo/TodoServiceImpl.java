@@ -32,9 +32,9 @@ public class TodoServiceImpl implements TodoService {
     }
 
     @Override
-    public Mono<Todo> completeById(Long id) {
+    public Mono<Todo> updateById(Long id, Todo todo) {
         return findById(id)
-                .map(todo -> todo.withCompleted(true))
+                .thenReturn(todo.withId(id))
                 .flatMap(repository::save);
     }
 
