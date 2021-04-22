@@ -14,13 +14,6 @@ spec:
             pathType: ImplementationSpecific
             backend:
               service:
-                name: frontend
+                name: nginx
                 port:
                   number: 80
-          - path: /api/(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: backend
-                port:
-                  number: 8080
