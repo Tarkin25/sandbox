@@ -1,6 +1,6 @@
 import { AppBar, Container, Toolbar, Typography } from '@material-ui/core';
 import React from 'react';
-import TodoList from './features/todos/TodoList';
+import TodoList from '../features/todos/TodoList';
 
 const App = () => {
 

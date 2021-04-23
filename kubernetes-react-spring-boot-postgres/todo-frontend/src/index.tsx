@@ -1,18 +1,18 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import App from "./App";
 import { store } from "./app/store";
 import { Provider } from "react-redux";
 import * as serviceWorker from "./serviceWorker";
 import { CssBaseline, MuiThemeProvider } from "@material-ui/core";
 import theme from "./resources/theme";
+import Routes from "./app/Routes";
 
 ReactDOM.render(
     <React.StrictMode>
         <Provider store={store}>
             <MuiThemeProvider theme={theme}>
                 <CssBaseline />
-                <App />
+                <Routes />
             </MuiThemeProvider>
         </Provider>
     </React.StrictMode>,
