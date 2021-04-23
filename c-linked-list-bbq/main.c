@@ -32,23 +32,32 @@ typedef struct SNode {
     struct SNode *next;
 } Node;
 
-Node *newList() {
-    return calloc(1, sizeof(Node));
+Node **newList() {
+    return calloc(1, sizeof(Node*));
 }
 
-void addItem(Node *head, char *item) {
-    while(head->next != NULL && compareIgnoreCase(head->next->item, item) < 1) {
-        head = head->next;
+void addItem(Node **list, char *item) {
+    Node *current = *list;
+
+    while(current != NULL && current->next != NULL && compareIgnoreCase(current->next->item, item) < 1) {
+        current = current->next;
     }
 
-    Node* new = malloc(sizeof(Node));
-    new->item = item;
-    new->next = head->next;
-    head->next = new;
+    if(current == *list) {
+        current = malloc(sizeof(Node*));
+        current->item = item;
+        current->next = *list;
+        *list = current;
+    } else {
+        Node *new = malloc(sizeof(Node));
+        new->item = item;
+        new->next = current->next;
+        current->next = new;
+    }
 }
 
-void printItems(Node *head) {
-    Node *current = head->next;
+void printItems(Node **list) {
+    Node *current = *list;
 
     while(current != NULL) {
         printf("%s\n", current->item);
@@ -58,18 +67,18 @@ void printItems(Node *head) {
 
 int main() {
 
-    Node *head = newList();
+    Node **list = newList();
 
-    addItem(head, "Beer");
-    addItem(head, "Sausage");
-    addItem(head, "Chips");
-    addItem(head, "Cider");
-    addItem(head, "Apples");
-    addItem(head, "Tonic");
-    addItem(head, "zafron");
-    addItem(head, "apple juice");
+    addItem(list, "Beer");
+    addItem(list, "Sausage");
+    addItem(list, "Chips");
+    addItem(list, "Cider");
+    addItem(list, "Apples");
+    addItem(list, "Tonic");
+    addItem(list, "zafron");
+    addItem(list, "apple juice");
 
-    printItems(head);
+    printItems(list);
 
     return 0;
 }
