@@ -15,10 +15,10 @@ public class User extends DomainEntity {
 
     String googleId;
 
+    String facebookId;
+
     String email;
 
     String name;
-
-    boolean deleted;
 
 }
