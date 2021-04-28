@@ -12,7 +12,6 @@ import {
     GoogleLoginResponseOffline,
     useGoogleLogin,
 } from "react-google-login";
-import api from "./api";
 import FacebookLogin, { ReactFacebookFailureResponse, ReactFacebookLoginInfo } from "react-facebook-login";
 
 const googleClientId =
@@ -33,12 +32,7 @@ const App = () => {
         result: GoogleLoginResponse | GoogleLoginResponseOffline
     ) => {
         if (isLoginResponse(result)) {
-            console.log(result);
-            
-            api.post("/auth/sign-in/google", undefined, {params: {googleIdToken: result.getAuthResponse().id_token}})
-            .then(res => {
-              console.log("google sign-in", res.data);
-            })
+            console.log("google sign-in", result.getAuthResponse().id_token);
         }
     };
 
@@ -46,34 +40,19 @@ const App = () => {
         result: GoogleLoginResponse | GoogleLoginResponseOffline
     ) => {
         if(isLoginResponse(result)) {
-            console.log(result);
-
-            api.post("/auth/sign-up/google", undefined, {params: {googleIdToken: result.getAuthResponse().id_token}})
-            .then(res => {
-                console.log("google sign-up", res.data);
-            })
+            console.log("google sign-up", result.getAuthResponse().id_token);
         }
     }
 
     const facebookSignIn = (userInfo: ReactFacebookLoginInfo | ReactFacebookFailureResponse) => {
-        console.log("userInfo", userInfo);
-
         if(isFacebookLoginInfo(userInfo)) {
-            api.post("/auth/sign-in/facebook", undefined, {params: {accessToken: userInfo.accessToken}})
-            .then(res => {
-                console.log("facebook sign-in", res.data);
-            })
+            console.log("facebook sign-in", userInfo.accessToken);
         }
     }
 
     const facebookSignUp = (userInfo: ReactFacebookLoginInfo | ReactFacebookFailureResponse) => {
-        console.log("userInfo", userInfo);
-
         if(isFacebookLoginInfo(userInfo)) {
-            api.post("/auth/sign-up/facebook", undefined, {params: {accessToken: userInfo.accessToken}})
-            .then(res => {
-                console.log("facebook sign-up", res.data);
-            })
+            console.log("facebook sign-up", userInfo.accessToken);
         }
     }
 

@@ -1,8 +1,13 @@
 package com.example.authentication.domain.user;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface UserService {
+
+    Mono<User> findById(Long id);
+
+    Flux<User> findAll();
 
     /**
      * Sign in using a Google ID token.

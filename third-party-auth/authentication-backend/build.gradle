@@ -20,6 +20,7 @@ repositories {
 
 def jwtVersion = '0.11.2'
 def googleClientVersion = '1.31.2'
+def mapStructVersion = '1.4.0.Final'
 
 dependencies {
     // Spring Actuator
@@ -47,6 +48,11 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
+    // MapStruct
+    implementation "org.mapstruct:mapstruct:${mapStructVersion}"
+    annotationProcessor "org.mapstruct:mapstruct-processor:${mapStructVersion}"
+    testAnnotationProcessor "org.mapstruct:mapstruct-processor:${mapStructVersion}"
+
     // PostgreSQL
     runtimeOnly 'io.r2dbc:r2dbc-postgresql'
     runtimeOnly 'org.postgresql:postgresql'
@@ -65,4 +71,12 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+compileJava {
+    dependsOn processResources
+    options.compilerArgs += [
+            '-Amapstruct.unmappedTargetPolicy=IGNORE',
+            '-Amapstruct.defaultComponentModel=spring'
+    ]
 }

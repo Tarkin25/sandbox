@@ -3,14 +3,17 @@ package com.example.authentication.domain.user;
 import com.example.authentication.exception.InvalidGoogleTokenException;
 import com.example.authentication.exception.SignInException;
 import com.example.authentication.exception.UserExistsException;
+import com.example.authentication.security.UserDetailsImpl;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.SynchronousSink;
 
@@ -28,6 +31,16 @@ public class UserServiceImpl implements UserService {
     UserRepository repository;
     GoogleIdTokenVerifier tokenVerifier;
     WebClient graphClient = WebClient.create("https://graph.facebook.com");
+
+    @Override
+    public Mono<User> findById(Long id) {
+        return repository.findById(id);
+    }
+
+    @Override
+    public Flux<User> findAll() {
+        return repository.findAll();
+    }
 
     /**
      * Sign in using a Google ID token.
@@ -183,7 +196,7 @@ public class UserServiceImpl implements UserService {
     private Mono<User> updateIfNeeded(User user, UserData userData) {
 
         if (isUpdateNeeded(user, userData)) {
-            log.debug("Updating user with payload values");
+            log.debug("Updating user with new values");
             return update(user, userData);
         } else {
             return Mono.just(user);
@@ -254,7 +267,7 @@ public class UserServiceImpl implements UserService {
      * @return The created User
      */
     private Mono<User> createFromGoogle(UserData userData) {
-        User user = new User()
+        var user = new User()
                 .withGoogleId(userData.getId())
                 .withEmail(userData.getEmail())
                 .withName(userData.getName());
@@ -268,7 +281,7 @@ public class UserServiceImpl implements UserService {
      * @return The created User
      */
     private Mono<User> createFromFacebook(UserData userData) {
-        User user = new User()
+        var user = new User()
                 .withFacebookId(userData.getId())
                 .withEmail(userData.getEmail())
                 .withName(userData.getName());
