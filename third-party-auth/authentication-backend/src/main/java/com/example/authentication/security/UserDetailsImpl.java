@@ -2,6 +2,7 @@ package com.example.authentication.security;
 
 import com.example.authentication.domain.user.User;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.security.core.GrantedAuthority;
@@ -12,6 +13,7 @@ import java.util.Collections;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
+@Getter
 public class UserDetailsImpl implements UserDetails {
 
     User user;

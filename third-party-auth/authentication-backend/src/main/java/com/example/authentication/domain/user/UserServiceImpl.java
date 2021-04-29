@@ -151,7 +151,7 @@ public class UserServiceImpl implements UserService {
      */
     private Mono<GoogleIdToken> verifyGoogleToken(String tokenString) {
         return Mono.create(sink -> {
-            log.debug("Verifying google id token '{}'", tokenString);
+            log.debug("Verifying google id token");
 
             try {
                 GoogleIdToken token = tokenVerifier.verify(tokenString);

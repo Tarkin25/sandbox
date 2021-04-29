@@ -1,111 +1,61 @@
 import {
-    AppBar,
-    Box,
-    Button,
+    CircularProgress,
     Container,
-    Toolbar,
-    Typography,
+    makeStyles,
 } from "@material-ui/core";
-import React from "react";
-import {
-    GoogleLoginResponse,
-    GoogleLoginResponseOffline,
-    useGoogleLogin,
-} from "react-google-login";
-import FacebookLogin, { ReactFacebookFailureResponse, ReactFacebookLoginInfo } from "react-facebook-login";
+import React, { useEffect } from "react";
+import { useSelector } from "react-redux";
+import { Switch, useHistory } from "react-router-dom";
+import Center from "../components/Center";
+import { AuthActions, AuthSelectors } from "../features/auth/authSlice";
+import SignInPage from "../features/auth/SignInPage";
+import SignUpPage from "../features/auth/SignUpPage";
+import Header from "../features/header/Header";
+import UserList from "../features/user/UserList";
+import { useAppDispatch } from "./hooks";
+import Route from "./Route";
+import Routes from "./Routes";
 
-const googleClientId =
-    "123219520317-hp1o583h2ceh28uln9o62a9lscq67ufn.apps.googleusercontent.com";
-
-const facebookAppId = "197602162004868";
-
-const isLoginResponse = (result: GoogleLoginResponse | GoogleLoginResponseOffline): result is GoogleLoginResponse =>
-  // @ts-ignore
-    typeof result.googleId === "string";
-
-const isFacebookLoginInfo = (info: ReactFacebookLoginInfo | ReactFacebookFailureResponse): info is ReactFacebookLoginInfo => 
- // @ts-ignore
-    typeof info.id === "string";
+const useStyles = makeStyles(
+    (theme) => ({
+        container: {
+            paddingTop: theme.spacing(2),
+        },
+    }),
+    { name: "App" }
+);
 
 const App = () => {
-    const handleGoogleSignIn = (
-        result: GoogleLoginResponse | GoogleLoginResponseOffline
-    ) => {
-        if (isLoginResponse(result)) {
-            console.log("google sign-in", result.getAuthResponse().id_token);
-        }
-    };
+    const classes = useStyles();
+    const dispatch = useAppDispatch();
+    const history = useHistory();
+    const status = useSelector(AuthSelectors.selectStatus);
 
-    const handleGoogleSignUp = (
-        result: GoogleLoginResponse | GoogleLoginResponseOffline
-    ) => {
-        if(isLoginResponse(result)) {
-            console.log("google sign-up", result.getAuthResponse().id_token);
-        }
-    }
-
-    const facebookSignIn = (userInfo: ReactFacebookLoginInfo | ReactFacebookFailureResponse) => {
-        if(isFacebookLoginInfo(userInfo)) {
-            console.log("facebook sign-in", userInfo.accessToken);
-        }
-    }
-
-    const facebookSignUp = (userInfo: ReactFacebookLoginInfo | ReactFacebookFailureResponse) => {
-        if(isFacebookLoginInfo(userInfo)) {
-            console.log("facebook sign-up", userInfo.accessToken);
-        }
-    }
-
-    const { signIn: googleSignIn } = useGoogleLogin({
-        clientId: googleClientId,
-        onSuccess: handleGoogleSignIn,
-    });
-
-    const {signIn: googleSignUp} = useGoogleLogin({
-        clientId: googleClientId,
-        onSuccess: handleGoogleSignUp
-    })
+    useEffect(() => {
+        dispatch(AuthActions.authenticateFromToken());
+    }, [dispatch, history]);
 
     return (
         <div>
-            <AppBar position="static">
-                <Toolbar>
-                    <Typography variant="h4">Authentication</Typography>
-                </Toolbar>
-            </AppBar>
-            <Container>
-                <Box m={4}>
-                    <Button
-                        color="primary"
-                        variant="contained"
-                        onClick={googleSignIn}
-                    >
-                        Sign in with Google
-                    </Button>
-                </Box>
-                <Box m={4}>
-                    <Button
-                        color="primary"
-                        variant="contained"
-                        onClick={googleSignUp}
-                    >
-                        Sign up with Google
-                    </Button>
-                </Box>
-                <Box m={4}>
-                    <FacebookLogin
-                        appId={facebookAppId}
-                        callback={facebookSignIn}
-                        textButton="Sign in with Facebook"
-                    />
-                </Box>
-                <Box m={4}>
-                    <FacebookLogin
-                        appId={facebookAppId}
-                        callback={facebookSignUp}
-                        textButton="Sign up with Facebook"
-                    />
-                </Box>
+            <Header />
+            <Container className={classes.container}>
+                {status === "initializing" ? (
+                    <Center>
+                        <CircularProgress />
+                    </Center>
+                ) : (
+                    <Switch>
+                        <Route secure exact path={Routes.HOME}>
+                            <UserList />
+                        </Route>
+                        <Route exact path={Routes.SIGN_IN}>
+                            <SignInPage />
+                        </Route>
+                        <Route exact path={Routes.SIGN_UP}>
+                            <SignUpPage />
+                        </Route>
+                    </Switch>
+                )}
             </Container>
         </div>
     );

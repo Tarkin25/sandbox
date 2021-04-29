@@ -4,8 +4,11 @@ import com.example.authentication.domain.user.UserService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher;
+import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
@@ -23,6 +26,7 @@ public class JwtOncePerRequestAuthenticationFilter implements WebFilter {
 
     UserIdConverter userIdConverter;
     UserService userService;
+    ServerWebExchangeMatcher ignoreAuthenticationMatcher = ServerWebExchangeMatchers.pathMatchers(HttpMethod.POST, "/authentication/**");
 
     /**
      * Process the Web request and (optionally) delegate to the next
@@ -37,11 +41,12 @@ public class JwtOncePerRequestAuthenticationFilter implements WebFilter {
         Boolean filtered = exchange.getAttribute(FILTERED_ATTRIBUTE);
 
         if(!Boolean.TRUE.equals(filtered)) {
-            return userIdConverter.convert(exchange)
+            return ignoreAuthenticationMatcher.matches(exchange).filter(matchResult -> !matchResult.isMatch())
+                    .flatMap(matchResult -> userIdConverter.convert(exchange))
                     .flatMap(userService::findById)
+                    .switchIfEmpty(chain.filter(exchange).then(Mono.empty()))
                     .map(UserDetailsImpl::new)
-                    .flatMap(completeAuthentication(exchange, chain))
-                    .switchIfEmpty(chain.filter(exchange));
+                    .flatMap(completeAuthentication(exchange, chain));
         } else {
             return chain.filter(exchange);
         }
