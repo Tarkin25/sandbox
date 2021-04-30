@@ -1,55 +1,25 @@
-use std::fmt;
-use std::fmt::{Display, Formatter, Result};
+use std::mem;
 
-fn reverse(pair: (i32, bool)) -> (bool, i32) {
-    let (integer, boolean) = pair;
-
-    (boolean, integer)
-}
-
-#[derive(Debug)]
-struct Matrix(f32, f32, f32, f32);
-
-impl Display for Matrix {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        write!(f, "( {}, {} )\n( {}, {} )", self.0, self.1, self.2, self.3)
-    }
-}
-
-fn transpose(matrix: Matrix) -> Matrix {
-    let Matrix (x1, x2, y1, y2) = matrix;
-
-    return Matrix(x1, y1, x2, y2);
+fn analyze_slice(slice: &[i32]) {
+    println!("first element of slice: {}", slice[0]);
+    println!("the slice has {} elements", slice.len());
 }
 
 fn main() {
+    let xs: [i32; 5] = [1, 2, 3, 4, 5];
 
-    let long_tuple = (1u8, 2u16, 3u32, 4u64, -1i8, -2i16, -3i32, -4i64, 0.1f32, 0.2f64, 'a', true);
+    let ys: [i32; 500] = [0; 500];
 
-    println!("long tuple first value: {}", long_tuple.0);
-    println!("long tuple second value: {}", long_tuple.1);
+    println!("first element of the array: {}", xs[0]);
+    println!("second element of the array: {}", xs[1]);
 
-    let tuple_of_tuples = ((1u8, 2u16, 3u32), (4u64, -1i8), -2i16);
+    println!("number of elements in array: {}", xs.len());
 
-    println!("tuple of tuples: {:?}", tuple_of_tuples);
+    println!("array occupies {} bytes", mem::size_of_val(&xs));
 
-    let pair = (1, true);
-    println!("pair is {:?}", pair);
+    println!("borrow the whole array as a slice");
+    analyze_slice(&xs);
 
-    println!("the reversed pair is {:?}", reverse(pair));
-
-    println!("one element tuple: {:?}", (5u32,));
-    println!("just an integer: {:?}", (5u32));
-
-    let tuple = (1, "hello", 4.5, true);
-
-    let (a, b, c, d) = tuple;
-    println!("{:?}, {:?}, {:?}, {:?}", a, b, c, d);
-
-    let matrix = Matrix(1.1, 1.2, 2.1, 2.2);
-    println!("{:?}", matrix);
-
-    println!("Matrix:\n{}", matrix);
-    println!("Transpose:\n{}", transpose(matrix));
-
+    println!("borrow a section of the array as a slice");
+    analyze_slice(&ys[1 .. 4]);
 }
