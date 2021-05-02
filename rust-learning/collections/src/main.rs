@@ -1,29 +1,37 @@
-use std::collections::HashMap;
-
 fn main() {
 
-    let mut scores = HashMap::new();
+    let words = "first apple";
 
-    // Insert value, potentially overriding existing an existing value for a given key
-    scores.insert(String::from("Blue"), 10);
-    scores.insert(String::from("Yellow"), 50);
+    println!("\"{}\" in pig latin is \"{}\"", words, pig_latin(words));
 
-    for (key, value) in &scores {
-        println!("{}: {}", key, value);
+}
+
+fn pig_latin(s: &str) -> String {
+    let mut result = String::new();
+
+    for word in s.split_whitespace() {
+        if let Some(first) = word.chars().nth(0) {
+            if is_vowel(&first) {
+                result.push_str(word);
+                result.push_str("-hay");
+            } else {
+                result.push_str(&word[1..]);
+                result.push('-');
+                result.push(first);
+                result.push_str("ay");
+            }
+
+            result.push(' ');
+        }
     }
 
-    // Only insert a value for a given key if none exists yet
-    scores.entry(String::from("Blue")).or_insert(50);
+    result.truncate(result.len() - 1);
 
-    // Word counter using or_insert
-    let text = "hello world wonderful world";
+    result
+}
 
-    let mut word_counts = HashMap::new();
+const VOWELS: [char; 5] = ['a', 'e', 'i', 'o', 'u'];
 
-    for word in text.split_whitespace() {
-        let count = word_counts.entry(word).or_insert(0);
-        *count += 1;
-    }
-
-    println!("word counts:\n{:?}", word_counts);
+fn is_vowel(c: &char) -> bool {
+    VOWELS.contains(c)
 }
