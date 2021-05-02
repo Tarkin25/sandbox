@@ -1,34 +1,29 @@
+use std::collections::HashMap;
+
 fn main() {
-    let mut mutable_vec = vec![1, 2, 3, 4, 5];
 
-    println!("mutable vec before transform: {:?}", mutable_vec);
+    let mut scores = HashMap::new();
 
-    transform(&mut mutable_vec, |i| (*i) * 2);
+    // Insert value, potentially overriding existing an existing value for a given key
+    scores.insert(String::from("Blue"), 10);
+    scores.insert(String::from("Yellow"), 50);
 
-    println!("mutable vec after transform: {:?}", mutable_vec);
-
-    let immutable_vec = vec![1,2,3,4,5];
-
-    println!("immutable vec before map: {:?}", immutable_vec);
-
-    let immutable_vec_doubled = map(&immutable_vec, |i| *i * 2);
-
-    println!("immutable vec after map: {:?}", immutable_vec);
-    println!("immutable vec doubled: {:?}", immutable_vec_doubled);
-}
-
-fn transform<T>(v: &mut Vec<T>, mapper: fn(&T) -> T) {
-    for element in v.iter_mut() {
-        *element = mapper(element);
-    }
-}
-
-fn map<T>(v: &Vec<T>, mapper: fn(&T) -> T) -> Vec<T> {
-    let mut new = Vec::with_capacity(v.len());
-
-    for element in v.iter() {
-        new.push(mapper(element));
+    for (key, value) in &scores {
+        println!("{}: {}", key, value);
     }
 
-    new
+    // Only insert a value for a given key if none exists yet
+    scores.entry(String::from("Blue")).or_insert(50);
+
+    // Word counter using or_insert
+    let text = "hello world wonderful world";
+
+    let mut word_counts = HashMap::new();
+
+    for word in text.split_whitespace() {
+        let count = word_counts.entry(word).or_insert(0);
+        *count += 1;
+    }
+
+    println!("word counts:\n{:?}", word_counts);
 }
