@@ -1,25 +1,39 @@
-use std::mem;
-
-fn analyze_slice(slice: &[i32]) {
-    println!("first element of slice: {}", slice[0]);
-    println!("the slice has {} elements", slice.len());
-}
+use std::io;
+use rand::Rng;
+use std::cmp::Ordering;
+use std::io::Write;
 
 fn main() {
-    let xs: [i32; 5] = [1, 2, 3, 4, 5];
+    println!("Guess the number!");
 
-    let ys: [i32; 500] = [0; 500];
+    let secret_number = rand::thread_rng().gen_range(1, 101);
 
-    println!("first element of the array: {}", xs[0]);
-    println!("second element of the array: {}", xs[1]);
+    let mut guess = String::new();
 
-    println!("number of elements in array: {}", xs.len());
+    loop {
+        print!("Please input your guess: ");
+        io::stdout().flush().expect("Unable to flush stdout");
 
-    println!("array occupies {} bytes", mem::size_of_val(&xs));
+        guess.clear();
 
-    println!("borrow the whole array as a slice");
-    analyze_slice(&xs);
+        io::stdin()
+            .read_line(&mut guess)
+            .expect("Failed to read line");
 
-    println!("borrow a section of the array as a slice");
-    analyze_slice(&ys[1 .. 4]);
+        let guess: u32 = match guess.trim().parse() {
+            Ok(num) => num,
+            Err(_) => continue,
+        };
+
+        println!("You guessed: {}", guess);
+
+        match guess.cmp(&secret_number) {
+            Ordering::Less => println!("Too small!"),
+            Ordering::Greater => println!("Too big!"),
+            Ordering::Equal => break,
+        }
+    }
+
+    println!("You win!");
+
 }
