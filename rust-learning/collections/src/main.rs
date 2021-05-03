@@ -1,37 +1,14 @@
+use collections::LinkedList;
+
 fn main() {
 
-    let words = "first apple";
+    let mut list = LinkedList::new();
 
-    println!("\"{}\" in pig latin is \"{}\"", words, pig_latin(words));
+    list.add(1)
+        .add(2)
+        .add(3)
+        .add(4)
+        .add(5)
+        .for_each(|value| println!("{}", value));
 
-}
-
-fn pig_latin(s: &str) -> String {
-    let mut result = String::new();
-
-    for word in s.split_whitespace() {
-        if let Some(first) = word.chars().nth(0) {
-            if is_vowel(&first) {
-                result.push_str(word);
-                result.push_str("-hay");
-            } else {
-                result.push_str(&word[1..]);
-                result.push('-');
-                result.push(first);
-                result.push_str("ay");
-            }
-
-            result.push(' ');
-        }
-    }
-
-    result.truncate(result.len() - 1);
-
-    result
-}
-
-const VOWELS: [char; 5] = ['a', 'e', 'i', 'o', 'u'];
-
-fn is_vowel(c: &char) -> bool {
-    VOWELS.contains(c)
 }
