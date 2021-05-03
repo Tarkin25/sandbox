@@ -1,3 +1,7 @@
+//! # Testing
+//!
+//! `testing`is a crate with the basic concepts used for testing Rust code.
+
 #[derive(Debug)]
 struct Rectangle {
     width: u32,
@@ -9,7 +13,16 @@ impl Rectangle {
         self.width > other.width && self.height > other.height
     }
 }
-
+/// Adds two to the number given.
+///
+/// # Examples
+///
+/// ```
+/// let arg = 5;
+/// let answer = testing::add_two(arg);
+///
+/// assert_eq!(7, answer);
+/// ```
 pub fn add_two(a: i32) -> i32 {
     internal_adder(a, 2)
 }
