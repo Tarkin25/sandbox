@@ -2,10 +2,14 @@ use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 use std::thread::JoinHandle;
+use std::borrow::Borrow;
+use std::ops::Deref;
+
+pub mod event_loop;
 
 pub struct ThreadPool {
     workers: Vec<Worker>,
-    sender: Sender<Message>,
+    sender: Arc<Mutex<Sender<Message>>>,
 }
 
 type Job = Box<dyn FnOnce() + Send + 'static>;
@@ -36,7 +40,7 @@ impl ThreadPool {
             workers.push(Worker::new(id, Arc::clone(&receiver)));
         }
 
-        ThreadPool { workers, sender }
+        ThreadPool { workers, sender: Arc::new(Mutex::new(sender)) }
     }
 
     pub fn execute<F>(&self, f: F)
@@ -45,7 +49,25 @@ impl ThreadPool {
     {
         let message = Message::NewJob(Box::new(f));
 
-        self.sender.send(message).unwrap();
+        self.sender.lock().unwrap().send(message).unwrap();
+    }
+
+    pub fn execute_then<F, T>(&self, f: F, then: T)
+        where
+            F: FnOnce() + Send + 'static,
+            T: FnOnce() + Send + 'static,
+    {
+        let sender = Arc::clone(&self.sender);
+
+        let func = move || {
+            f();
+
+            sender.lock().unwrap().send(Message::NewJob(Box::new(then))).unwrap();
+        };
+
+        let message = Message::NewJob(Box::new(func));
+
+        self.sender.lock().unwrap().send(message).unwrap();
     }
 }
 
@@ -54,7 +76,7 @@ impl Drop for ThreadPool {
         println!("Sending terminate message to all workers.");
 
         for _ in &self.workers {
-            self.sender.send(Message::Terminate).unwrap();
+            self.sender.lock().unwrap().send(Message::Terminate).unwrap();
         }
 
         println!("Shutting down all workers.");
