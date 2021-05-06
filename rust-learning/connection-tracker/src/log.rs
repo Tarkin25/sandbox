@@ -3,7 +3,7 @@ use std::fs::OpenOptions;
 use crate::ConnectionFailure;
 use std::fmt::{Display, Result, Formatter};
 use chrono::{Duration, Date, Utc, NaiveTime};
-use std::io::Result as IoResult;
+use std::io::{Result as IoResult, Write};
 
 pub struct FailureLogger<'a> {
     path: &'a str

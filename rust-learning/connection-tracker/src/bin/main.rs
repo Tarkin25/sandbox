@@ -70,5 +70,5 @@ async fn reconnect(client: &Client) {
 }
 
 fn create_request(client: &Client) -> Request {
-    client.get("https://google.com/search").build().unwrap()
+    client.get("https://google.com/search").timeout(Duration::from_secs(10)).build().unwrap()
 }
