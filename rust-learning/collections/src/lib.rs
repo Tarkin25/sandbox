@@ -1,80 +1,78 @@
-use std::ops::{Deref, DerefMut};
+use std::rc::Rc;
+use std::cell::RefCell;
+use std::ops::Deref;
+use std::fmt::{Debug, Formatter};
+use std::borrow::Borrow;
+use std::marker::PhantomData;
 
-enum Node<T> {
-    None,
-    Tail { value: T },
-    Link { value: T, next: Box<Node<T>>}
+struct Node<T> {
+    value: T,
+    next: Option<Rc<RefCell<Node<T>>>>,
+    prev: Option<Rc<RefCell<Node<T>>>>,
 }
 
+#[derive(Debug)]
 pub struct LinkedList<T> {
-    head: Node<T>,
-    length: i32,
+    head: Option<Rc<RefCell<Node<T>>>>,
+    length: usize,
 }
 
-impl <T: Copy> LinkedList<T> {
+pub struct Iter<'a, T: 'a> {
+    current: Option<Rc<RefCell<Node<T>>>>,
+    phantom_data: PhantomData<&'a T>,
+}
 
+impl<T: Debug> Debug for Node<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Node {{ value: {:?}, next: {:?}}}", self.value, self.next)
+    }
+}
+
+impl<T> LinkedList<T> {
     pub fn new() -> Self {
         LinkedList {
-            head: Node::None,
-            length: 0
+            head: None,
+            length: 0,
         }
     }
 
-    pub fn len(&self) -> i32 {
+    pub fn len(&self) -> usize {
         self.length
     }
 
-    pub fn for_each(&self, callback: fn(&T)) {
-        Self::for_each_rec(&self.head, callback);
-    }
+    pub fn add(&mut self, value: T) -> &mut Self where T: Debug {
+        if let Some(ref head) = self.head {
+            let mut temp = head.clone();
 
-    fn for_each_rec(node: &Node<T>, callback: fn(&T)) {
-        match node {
-            Node::None => (),
-            Node::Tail { value } => {
-                callback(value);
-            },
-            Node::Link { value, next } => {
-                callback(value);
-                Self::for_each_rec(next.deref(), callback);
+            while let Some(next) = temp.clone().deref().borrow().next.as_ref() {
+                temp = next.clone();
             }
+
+            let next = Node { prev: Some(temp.clone()), value, next: None};
+
+            temp.borrow_mut().next = Some(Rc::new(RefCell::new(next)));
+        } else {
+            self.head = Some(Rc::new(RefCell::new(Node { value, prev: None, next: None})));
         }
-    }
-
-    pub fn add(&mut self, value: T) -> &mut Self {
-        match self.head {
-            Node::None => {
-                self.head = Node::Tail { value };
-            },
-            Node::Tail { value: tail_value } => {
-                self.head = Node::Link {
-                    value: tail_value,
-                    next: Box::new(Node::Tail { value })
-                }
-            },
-            Node::Link { value: _, ref mut next} => {
-                Self::add_last(next.deref_mut(), value);
-            }
-        };
 
         self.length += 1;
 
         self
     }
+}
 
-    fn add_last(node: &mut Node<T>, value: T) {
-        match node {
-            Node::Tail { value: node_value } => {
-                *node = Node::Link {
-                    value: *node_value,
-                    next: Box::new(Node::Tail { value })
-                }
-            }
-            Node::Link { next, .. } => {
-                Self::add_last(next.deref_mut(), value);
-            },
-            _ => println!("Cannot add to None")
+impl<'a, T: 'a> Iterator for Iter<'a, T> {
+    type Item = &'a T;
+
+    fn next(&mut self) -> Option<&'a T> {
+        if let Some(ref current) = self.current {
+            let value = Some(&current.deref().borrow().value);
+
+            self.current = current.clone().into_inner().next;
+
+            value
+        } else {
+            None
         }
     }
-
 }

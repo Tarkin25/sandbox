@@ -45,7 +45,6 @@ async fn find_all(pool: Data<Pool>) -> impl Responder {
     .select((author::all_columns, book::all_columns));
 
     let sql = diesel::debug_query::<diesel::pg::Pg, _>(&query);
-
     log::debug!("{:?}", sql);
 
     let result = query

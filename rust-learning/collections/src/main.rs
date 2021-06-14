@@ -1,6 +1,7 @@
 use collections::LinkedList;
 
 fn main() {
+    std::collections::LinkedList::new();
 
     let mut list = LinkedList::new();
 
@@ -8,7 +9,6 @@ fn main() {
         .add(2)
         .add(3)
         .add(4)
-        .add(5)
-        .for_each(|value| println!("{}", value));
+        .add(5);
 
 }

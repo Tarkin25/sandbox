@@ -1,20 +1,16 @@
-use std::thread;
 use std::process;
 use std::time::Duration;
 
-use chrono::Utc;
-use reqwest::{Client, Request};
+use chrono::{Utc};
 
-use connection_tracker::{ConnectionFailure, FailureLogger};
+use connection_tracker::{ FailureLogger, HttpSingleProbe, ConnectionChecker, FailureTracker };
 
 const CSV_FILE_NAME: &str = "connection-tracker.csv";
-const CONNECTION_TIMEOUT: u64 = 10;
-const PROBE_INTERVAL: u64 = 60;
+const CONNECTION_TIMEOUT: u64 = 5;
+const PROBE_INTERVAL: u64 = 5;
 
 #[tokio::main]
 async fn main() {
-
-    let client = Client::new();
 
     let failure_logger = match FailureLogger::new(CSV_FILE_NAME) {
         Ok(l) => l,
@@ -24,55 +20,34 @@ async fn main() {
         }
     };
 
-    loop {
-        test_connection(&client).await;
+    let probe = HttpSingleProbe::new("https://google.com/search", CONNECTION_TIMEOUT);
 
-        let failure_start = Utc::now();
+    let tracker = FailureTracker::new();
 
-        println!("Connection failed. Reconnecting...");
+    let handle_connection_failure = || {
+        tracker.failure_start(Utc::now());
 
-        reconnect(&client).await;
+        println!("Connection failed: Reconnecting...");
+    };
+
+    let handle_reconnect = || {
+        tracker.failure_end(Utc::now());
 
         println!("Reconnected.");
 
-        let failure_end = Utc::now();
-
-        let connection_failure = ConnectionFailure::new(failure_start, failure_end);
+        let connection_failure = tracker.current_failure().unwrap();
 
         if let Err(e) = failure_logger.log(&connection_failure) {
             eprintln!("Unable to persist {:?}: {}", connection_failure, e);
         }
-    }
-}
+    };
 
-async fn test_connection(client: &Client) {
-    loop {
-        let request = create_request(client);
+    let mut checker = ConnectionChecker::builder()
+        .probe(probe)
+        .probe_interval(Duration::from_secs(PROBE_INTERVAL))
+        .on_connection_failure(handle_connection_failure)
+        .on_reconnect(handle_reconnect)
+        .build();
 
-        if let Ok(_) = client.execute(request).await {
-            println!("Connection ok.");
-
-            thread::sleep(Duration::from_secs(PROBE_INTERVAL));
-        } else {
-            break;
-        }
-    }
-}
-
-async fn reconnect(client: &Client) {
-    loop {
-        let request = create_request(client);
-
-        if let Err(_) = client.execute(request).await {
-            println!("Re-connect failed.");
-
-            thread::sleep(Duration::from_secs(PROBE_INTERVAL));
-        } else {
-            break;
-        }
-    }
-}
-
-fn create_request(client: &Client) -> Request {
-    client.get("https://google.com/search").timeout(Duration::from_secs(CONNECTION_TIMEOUT)).build().unwrap()
+    checker.start().await;
 }
