@@ -1,0 +1,35 @@
+version: "3"
+services: 
+    zookeeper-1:
+        container_name: zookeeper-1
+        image: tarkin25/kafka-zookeeper:2.7.0
+        build: 
+            context: ./zookeeper
+        volumes: 
+            - ./config/zookeeper-1/zookeeper.properties:/kafka/config/zookeeper.properties
+    kafka-1:
+        container_name: kafka-1
+        image: tarkin25/kafka-broker:2.7.0
+        build:
+            context: ./broker
+        volumes:
+            - ./config/kafka-1/server.properties:/kafka/config/server.properties
+            - ./data/kafka-1/:/tmp/kafka-logs/
+    kafka-producer:
+        container_name: kafka-producer
+        image: tarkin25/kafka-producer:2.7.0
+        build:
+            context: ./broker
+        working_dir: /kafka
+        entrypoint: /bin/bash
+        stdin_open: true
+        tty: true
+    kafka-consumer:
+        container_name: kafka-consumer
+        image: tarkin25/kafka-consumer:2.7.0
+        build:
+            context: ./broker
+        working_dir: /kafka
+        entrypoint: /bin/bash
+        stdin_open: true
+        tty: true
