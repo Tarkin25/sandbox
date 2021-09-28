@@ -2,10 +2,16 @@ use std::fmt::Debug;
 use chrono::{DateTime, Utc, Duration};
 
 mod log;
+mod probe;
+mod check;
+mod track;
 
 pub use log::*;
+pub use probe::*;
+pub use check::*;
+pub use track::*;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct ConnectionFailure {
     start: DateTime<Utc>,
     end: DateTime<Utc>,
