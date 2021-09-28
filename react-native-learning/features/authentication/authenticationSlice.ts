@@ -27,7 +27,7 @@ export interface Login {
 
 const login = createAsyncThunk(
     'authentication/login',
-    async (login: Login): Promise<User> => new Promise((resolve, reject) => {
+    (login: Login): Promise<User> => new Promise((resolve, reject) => {
         setTimeout(() => {
             if (login.password === '12345') {
                 resolve({username: login.username});
@@ -36,6 +36,11 @@ const login = createAsyncThunk(
             }
         }, 500);
     })
+)
+
+const logout = createAsyncThunk(
+    'authentication/logout',
+    async () => {}
 )
 
 const slice = createSlice({
@@ -55,10 +60,15 @@ const slice = createSlice({
     .addCase(login.rejected, (state) => {
         state.status = 'authentication-failed';
     })
+    .addCase(logout.fulfilled, (state) => {
+        state.status = 'unauthenticated';
+        state.user = undefined;
+    })
 });
 
 export const AuthenticationActions = {
-    login
+    login,
+    logout
 }
 
 export const authenticationReducer = slice.reducer;
