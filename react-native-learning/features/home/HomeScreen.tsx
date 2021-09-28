@@ -1,31 +1,31 @@
-import { StackScreenProps } from '@react-navigation/stack'
+import { DrawerScreenProps } from '@react-navigation/drawer'
 import React from 'react'
-import { StyleSheet } from 'react-native'
-import { Button, Text } from 'react-native-paper'
-import { RouteParams } from '../../App'
+import { Text } from 'react-native-paper'
+import { DrawerParams } from '../../app/Navigator'
 import ScreenWrapper from '../../components/ScreenWrapper'
+import { createStyles } from '../../utils/createStyles'
 
-export interface HomeScreenProps extends StackScreenProps<RouteParams, 'Home'> {
+export interface HomeScreenProps extends DrawerScreenProps<DrawerParams, 'Home'> {
 
 }
 
 const HomeScreen = (props: HomeScreenProps) => {
 
     const {navigation} = props;
+    const styles = useStyles();
 
     return (
         <ScreenWrapper style={styles.root}>
             <Text>This is the home screen.</Text>
-            <Button mode="contained" onPress={() => navigation.navigate('Details')}>Go to details screen</Button>
         </ScreenWrapper>
     )
 }
 
 export default HomeScreen
 
-const styles = StyleSheet.create({
+const useStyles = createStyles(() => ({
     root: {
-        alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        alignItems: 'center'
     }
-})
+}))

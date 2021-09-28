@@ -23,7 +23,8 @@ const ScreenWrapper = (props: ScreenWrapperProps) => {
 const useStyles = createStyles(theme => ({
     container: {
         flex: 1,
-        backgroundColor: theme.colors.background
+        backgroundColor: theme.colors.background,
+        padding: 24
     }
 }))
 
