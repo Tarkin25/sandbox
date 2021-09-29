@@ -7,6 +7,8 @@ services:
             context: ./zookeeper
         volumes: 
             - ./config/zookeeper-1/zookeeper.properties:/kafka/config/zookeeper.properties
+        ports:
+            - 2181:2181
     kafka-1:
         container_name: kafka-1
         image: tarkin25/kafka-broker:2.7.0
@@ -15,6 +17,8 @@ services:
         volumes:
             - ./config/kafka-1/server.properties:/kafka/config/server.properties
             - ./data/kafka-1/:/tmp/kafka-logs/
+        ports:
+            - 9092:9092
     kafka-producer:
         container_name: kafka-producer
         image: tarkin25/kafka-producer:2.7.0

@@ -1,14 +1,12 @@
-import {
-    StackScreenProps
-} from "@react-navigation/stack";
+import { DrawerScreenProps } from "@react-navigation/drawer";
 import React from "react";
 import { Button, Text } from "react-native-paper";
-import { MainStackParams } from "../../app/MainStackNavigator";
 import ScreenWrapper from "../../components/ScreenWrapper";
+import { MainStackParams } from "../../navigation/MainStackNavigator";
 import { createStyles } from "../../utils/createStyles";
 
 export interface HomeScreenProps
-    extends StackScreenProps<MainStackParams, "Home"> {}
+    extends DrawerScreenProps<MainStackParams, "HomeNavigator"> {}
 
 const HomeScreen = (props: HomeScreenProps) => {
     const { navigation } = props;

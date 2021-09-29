@@ -3,8 +3,8 @@ import { NavigationContainer } from "@react-navigation/native";
 import React from "react";
 import { Provider as PaperProvider } from "react-native-paper";
 import { Provider as ReduxProvider } from "react-redux";
-import Navigator from "./app/Navigator";
 import { store } from "./app/store";
+import Navigator from "./navigation/Navigator";
 
 const App = () => {
 

@@ -15,4 +15,6 @@ RUN mkdir /tmp/kafka && \
 COPY start-kafka.sh /usr/bin
 RUN chmod +x /usr/bin/start-kafka.sh
 
+EXPOSE 9092
+
 CMD ["start-kafka.sh"]

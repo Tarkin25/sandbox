@@ -1,9 +1,9 @@
 import { createStackNavigator } from "@react-navigation/stack";
 import React from "react";
-import StackNavigationBar from "../components/StackNavigationBar";
+import { useAppSelector } from "../app/store";
 import LoginScreen from "../features/authentication/LoginScreen";
 import MainStackNavigator from "./MainStackNavigator";
-import { useAppSelector } from "./store";
+import StackHeader from "./StackHeader";
 
 export type StackParams = {
   Login: undefined;
@@ -22,7 +22,7 @@ const Navigator = () => {
     return (
       <Stack.Navigator
         screenOptions={{
-          header: StackNavigationBar,
+          header: StackHeader,
         }}
       >
         <Stack.Screen
