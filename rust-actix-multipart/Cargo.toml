@@ -1,0 +1,11 @@
+[package]
+name = "rust-actix-multipart"
+version = "0.1.0"
+authors = ["Tarkin25 <severin.weigold@edu.tbz.ch>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-multipart = "0.3.0"
+actix-web = "3.3.2"
