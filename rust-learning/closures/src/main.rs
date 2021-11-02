@@ -27,7 +27,11 @@ where
     }
 
     fn result(&mut self, arg: A) -> R {
-        *self.results.entry(arg).or_insert((self.calculation)(arg))
+        if let Some(result) = self.results.get(&arg) {
+            *result
+        } else {
+            *self.results.entry(arg).or_insert((self.calculation)(arg))
+        }
     }
 }
 
