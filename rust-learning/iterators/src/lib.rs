@@ -1,3 +1,5 @@
+mod range;
+
 struct Counter {
     count: u32,
 }
