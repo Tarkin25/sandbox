@@ -69,14 +69,14 @@ impl<T> Node<T> {
         self.children.push(child);
     }
 
-    pub fn debug_children<'a>(&'a self) -> impl Debug + 'a
+    pub fn debug_children(&self) -> impl Debug + '_
         where
             T: Debug,
     {
         WithChildren(self)
     }
 
-    pub fn debug_parent<'a>(&'a self) -> impl Debug + 'a
+    pub fn debug_parent(&self) -> impl Debug + '_
         where
             T: Debug,
     {
@@ -89,12 +89,12 @@ impl<T> Debug for Node<T>
         T: Debug,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let ref children = self
+        let children = &self
             .children
             .iter()
             .map(|child| WithChildren(child.borrow()))
             .collect::<Vec<_>>();
-        let ref parent = self
+        let parent = &self
             .parent
             .as_ref()
             .map(|parent| WithParent(parent.borrow()));
@@ -119,7 +119,7 @@ impl<T, R> Debug for WithParent<T, R>
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let node = self.0.deref();
-        let ref parent = node
+        let parent = &node
             .parent
             .as_ref()
             .map(|parent| WithParent(parent.borrow()));

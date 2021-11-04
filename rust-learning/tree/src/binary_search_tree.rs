@@ -1,6 +1,6 @@
 use core::cmp::Ordering::*;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct BinarySearchTree<K: Ord, V> {
     root: Option<Node<K, V>>,
 }
@@ -42,6 +42,10 @@ impl<K, V> BinarySearchTree<K, V> where K: Ord {
         } else {
             0
         }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.root.is_none()
     }
 }
 

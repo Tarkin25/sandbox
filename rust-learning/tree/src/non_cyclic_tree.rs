@@ -2,10 +2,37 @@ use std::cell::RefCell;
 use std::fmt::{Debug, Formatter};
 use std::ops::Deref;
 use std::rc::{Rc, Weak};
+use std::vec::IntoIter;
 
 type TreeCell<T> = RefCell<Node<T>>;
 pub type TreeNode<T> = Rc<TreeCell<T>>;
 type WeakNode<T> = Weak<TreeCell<T>>;
+
+pub trait NodeTrait {
+    fn append(&self, child: Self);
+}
+
+impl<T> NodeTrait for Rc<RefCell<Node<T>>> {
+    fn append(&self, child: Self) {
+        child.borrow_mut().parent = Rc::downgrade(&self);
+
+        let mut this = self.borrow_mut();
+
+        if let Some(first_child) = this.first_child() {
+            first_child.borrow_mut().next_sibling = Rc::downgrade(&child);
+        } else {
+            this.first_child = Rc::downgrade(&child);
+        }
+
+        if this.first_child().is_none() {
+            this.first_child = Rc::downgrade(&child);
+        }
+
+        this.last_child = Rc::downgrade(&child);
+
+        this.children.push(child);
+    }
+}
 
 #[derive(Debug)]
 pub struct Node<T> {
@@ -28,26 +55,6 @@ impl<T> Node<T> {
             last_child: Weak::new(),
             next_sibling: Weak::new(),
         }
-    }
-
-    pub fn append(this: &TreeNode<T>, child: TreeNode<T>) {
-        child.borrow_mut().parent = Rc::downgrade(this);
-
-        let mut this = this.borrow_mut();
-
-        if let Some(first_child) = this.first_child() {
-            first_child.borrow_mut().next_sibling = Rc::downgrade(&child);
-        } else {
-            this.first_child = Rc::downgrade(&child);
-        }
-
-        if this.first_child().is_none() {
-            this.first_child = Rc::downgrade(&child);
-        }
-
-        this.last_child = Rc::downgrade(&child);
-
-        this.children.push(child);
     }
 
     pub fn wrap(self) -> TreeNode<T> {
@@ -74,7 +81,7 @@ impl<T> Node<T> {
         &self.children
     }
 
-    pub fn strong_debug<'a>(&'a self) -> impl Debug + 'a where T: Debug {
+    pub fn strong_debug(&self) -> impl Debug + '_ where T: Debug {
         StrongDebug(self)
     }
 
@@ -102,16 +109,17 @@ impl<T, R> Debug for StrongDebug<T, R> where R: Deref<Target=Node<T>>, T: Debug 
 }
 
 pub struct DepthFirstIter<T> {
-    stack: Vec<TreeNode<T>>,
+    iter: IntoIter<TreeNode<T>>,
 }
 
 impl<T> DepthFirstIter<T> {
-    pub fn new(node: TreeNode<T>) -> Self {
+    pub fn new(node: &TreeNode<T>) -> Self {
         let mut stack = vec![];
-        Self::collect_children(&node, &mut stack);
+        Self::collect_children(node, &mut stack);
+        let iter = stack.into_iter();
 
         Self {
-            stack,
+            iter,
         }
     }
 
@@ -128,6 +136,6 @@ impl<T> Iterator for DepthFirstIter<T> {
     type Item = TreeNode<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.stack.pop()
+        self.iter.next()
     }
 }
