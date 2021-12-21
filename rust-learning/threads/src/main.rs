@@ -1,6 +1,5 @@
-use std::sync::{mpsc, Mutex, Arc};
+use std::sync::{Mutex, Arc};
 use std::thread;
-use std::time::Duration;
 
 fn main() {
 
