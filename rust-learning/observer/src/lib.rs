@@ -1,6 +1,7 @@
 mod observable;
 mod event_emitter;
 mod subscription;
+mod system;
 
 pub use event_emitter::EventEmitter;
 pub use subscription::Subscription;
@@ -25,8 +26,12 @@ mod tests {
         let mut emitter = EventEmitter::new();
         const CLICK: &str = "click";
         const HOVER: &str = "hover";
-        let click_sub = emitter.subscribe(CLICK, |target: &str| println!("clicked on {}", target));
-        let hover_sub = emitter.subscribe(HOVER, |target: &str| println!("hovered over {}", target));
+
+        let mut on_click = |target: &str| println!("clicked on {}", target);
+        let mut on_hover = |target: &str| println!("hovered over {}", target);
+
+        let click_sub = emitter.subscribe(CLICK, &mut on_click);
+        let hover_sub = emitter.subscribe(HOVER, &mut on_hover);
 
         emitter.emit_event(CLICK, "button");
         emitter.emit_event(HOVER, "button");

@@ -1,21 +1,21 @@
 use std::collections::HashMap;
 use crate::{OnEvent, Subscription};
 
-pub struct Observable<T> {
-    subscriptions: HashMap<Subscription, Box<dyn OnEvent<T>>>,
+pub struct Observable<'a, T> {
+    subscriptions: HashMap<Subscription, &'a mut dyn OnEvent<T>>,
 }
 
-impl<T> Observable<T> {
-    pub fn subscribe(&mut self, on_event: impl OnEvent<T> + 'static) -> Subscription {
+impl<'a, T> Observable<'a, T> {
+    pub fn subscribe(&mut self, on_event: &'a mut dyn OnEvent<T>) -> Subscription {
         let sub = Subscription::new();
-        self.subscriptions.insert(sub, Box::new(on_event));
+        self.subscriptions.insert(sub, on_event);
         sub
     }
 
-    pub fn emit_event(&mut self, event: T) where T: Copy {
+    pub fn emit_event(&mut self, event: T) where T: Clone {
         self.subscriptions
             .values_mut()
-            .for_each(|on_event| on_event.on_event(event));
+            .for_each(|on_event| on_event.on_event(event.clone()));
     }
 
     pub fn unsubscribe(&mut self, subscription: Subscription) {
@@ -24,7 +24,7 @@ impl<T> Observable<T> {
     }
 }
 
-impl<T> Default for Observable<T> {
+impl<T> Default for Observable<'_, T> {
     fn default() -> Self {
         Self {
             subscriptions: Default::default(),
