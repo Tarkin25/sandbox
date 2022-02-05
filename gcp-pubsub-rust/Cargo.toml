@@ -1,0 +1,16 @@
+[package]
+name = "gcp-pubsub-rust"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-trait = "0.1.52"
+cloud-pubsub = "0.7.0"
+dotenv = "0.15.0"
+env_logger = "0.9.0"
+hyper = "0.14.16"
+lazy_static = "1.4.0"
+log = "0.4.14"
+tokio = { version = "1.16.1", features = ["full"] }
