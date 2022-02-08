@@ -7,10 +7,12 @@ edition = "2021"
 
 [dependencies]
 async-trait = "0.1.52"
-cloud-pubsub = "0.7.0"
 dotenv = "0.15.0"
 env_logger = "0.9.0"
+google-cloud = { git = "https://github.com/Tarkin25/google-cloud-rs", branch = "feature/pubsub-emulator-host", features = ["pubsub"] }
 hyper = "0.14.16"
+json = { version = "1.0.78", package = "serde_json" }
 lazy_static = "1.4.0"
 log = "0.4.14"
+serde = { version = "1.0.136", features = ["derive"] }
 tokio = { version = "1.16.1", features = ["full"] }

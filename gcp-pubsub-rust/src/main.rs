@@ -1,91 +1,48 @@
-use cloud_pubsub::{Client, EncodedMessage, FromPubSubMessage};
-use cloud_pubsub::error::Error;
-use dotenv::dotenv;
-use hyper::{Body, Request};
-use lazy_static::lazy_static;
-use std::env;
-
-#[macro_use]
-extern crate async_trait;
-
-lazy_static! {
-    static ref PUBSUB_HOST: String = env::var("PUBSUB_EMULATOR_HOST")
-        .map(|host| format!("http://{}", host))
-        .unwrap_or_else(|_| String::from("https://pubsub.googleapis.com"));
-}
+use google_cloud::pubsub::{Client, SubscriptionConfig, TopicConfig};
+use serde::{Serialize, Deserialize};
 
 #[tokio::main]
 async fn main() {
-    dotenv().expect("Failed to initialize dotenv");
+    dotenv::dotenv().unwrap();
     env_logger::init();
 
-    let mut pubsub = Client::new("local/gcp-service-account.json".into())
-        .await
-        .expect("Unable to create client");
-    pubsub.set_project("test-project".into());
+    let mut client = Client::new("test-project").await.unwrap();
+    log::info!("Created client");
 
-    let topic_name = String::from("test-topic");
-    pubsub.create_topic(topic_name.clone()).await.expect("Failed to create topic 'test-topic'");
-    let topic = pubsub.topic(topic_name.clone());
+    let mut topic = if let Ok(topic) = client.create_topic("test-topic", TopicConfig::default()).await {
+        topic
+    } else {
+        client.topic("test-topic").await.unwrap().unwrap()
+    };
+    log::info!("Got handle to topic");
 
-    let subscription = topic.subscribe()
-        .await
-        .expect("Failed to subscribe to topic 'test-topic'");
+    let mut subscription = if let Ok(subscription) = topic.create_subscription("test-subscription", SubscriptionConfig::default()).await {
+        subscription
+    } else {
+        client.subscription("test-subscription").await.unwrap().unwrap()
+    };
+    log::info!("Got handle to subscription");
 
-    topic.publish("This is a test message")
-        .await
-        .expect("Failed to publish message to topic 'test-topic'");
-
-    let messages = subscription.get_messages::<TestMessage>()
-        .await
-        .expect("Failed to pull messages");
-
-    for message in &messages {
-        log::info!("Received message: {:#?}", message);
+    #[derive(Serialize, Deserialize, Debug)]
+    struct HelloWorld<'a> {
+        hello: &'a str,
     }
 
-    let ack_ids = messages.into_iter()
-        .map(|(_, ack_id)| ack_id)
-        .collect::<Vec<_>>();
+    let message = HelloWorld { hello: "world" };
+    let message = json::to_vec(&message).unwrap();
+    topic.publish(message).await.unwrap();
+    log::info!("Published message");
 
-    subscription.acknowledge_messages(ack_ids).await;
+    let mut received = subscription.receive().await.unwrap();
+    let message = json::from_slice::<HelloWorld>(received.data()).unwrap();
+    log::info!("Received message: {:?}", message);
 
-    log::info!("Cleaning up");
+    received.ack().await.unwrap();
+    log::info!("Acknowledged message");
 
-    subscription.destroy().await.expect("Failed to delete subscription");
+    subscription.delete().await.unwrap();
+    log::info!("Deleted subscription");
+
+    topic.delete().await.unwrap();
+    log::info!("Deleted topic");
 }
-
-#[derive(Debug)]
-struct TestMessage(String);
-
-impl FromPubSubMessage for TestMessage {
-    fn from(message: EncodedMessage) -> Result<Self, Error> {
-        match message.decode() {
-            Ok(bytes) => Ok(TestMessage(String::from_utf8_lossy(&bytes).into_owned())),
-            Err(e) => Err(Error::from(e)),
-        }
-    }
-}
-
-#[async_trait]
-trait ClientExt {
-    async fn create_topic(&self, name: String) -> hyper::Result<()>;
-}
-
-#[async_trait]
-impl ClientExt for Client {
-    async fn create_topic(&self, name: String) -> hyper::Result<()> {
-        let request = Request::builder()
-            .method("PUT")
-            .uri(format!("{}/v1/projects/{}/topics/{}", *PUBSUB_HOST, self.project(), name))
-            .body(Body::empty()).expect("Failed to create request");
-
-        self.hyper_client()
-            .request(request)
-            .await?;
-
-        Ok(())
-    }
-}
-
-
