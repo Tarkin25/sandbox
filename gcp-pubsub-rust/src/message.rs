@@ -3,16 +3,12 @@ use serde::Deserialize;
 use std::collections::HashMap;
 
 pub struct JsonMessage<T>
-where
-    T: for<'de> Deserialize<'de>,
 {
     message: Message,
     body: T,
 }
 
 impl<T> JsonMessage<T>
-where
-    T: for<'de> Deserialize<'de>,
 {
     pub fn body(&self) -> &T {
         &self.body

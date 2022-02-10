@@ -1,4 +1,4 @@
-use gcp_pubsub_rust::{Application, JsonMessage};
+use gcp_pubsub_rust::{Application, JsonMessage, Listen};
 use serde::Deserialize;
 use std::error::Error;
 use tokio::signal;
@@ -19,7 +19,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             "test-subscription",
             |mut message: JsonMessage<TestMessage>| async move {
                 message.ack().await.unwrap();
-            },
+            }
         )
         .start()
         .await?;
