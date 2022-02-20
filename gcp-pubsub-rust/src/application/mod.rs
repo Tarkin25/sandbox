@@ -1,25 +1,21 @@
 mod builder;
 
-use crate::{acquire_subscription, acquire_topic, JsonMessage};
-use futures::future::BoxFuture;
-use google_cloud::pubsub::{Client, Message};
-use serde::Deserialize;
-use std::future::Future;
-use std::sync::Arc;
+use crate::{acquire_subscription, acquire_topic};
+use google_cloud::pubsub::Client;
 use futures::stream::FuturesUnordered;
-use futures::{StreamExt, TryStreamExt};
+use futures::{TryStreamExt};
 use tokio::sync::broadcast;
 use tokio::sync::broadcast::Sender;
 use tokio::task::JoinHandle;
 use crate::application::builder::ApplicationBuilder;
-use crate::handler::{MessageHandler};
+use crate::handler::{RawHandler};
 
 pub use builder::*;
 
 pub(crate) struct Listener {
     topic: String,
     subscription: String,
-    handler: Box<dyn MessageHandler>,
+    handler: Box<dyn RawHandler>,
 }
 
 pub struct Application {

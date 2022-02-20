@@ -1,4 +1,4 @@
-use gcp_pubsub_rust::{Application, JsonMessage, Listen};
+use gcp_pubsub_rust::{Application, JsonMessage};
 use serde::Deserialize;
 use std::error::Error;
 use tokio::signal;
@@ -13,6 +13,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     dotenv::dotenv().unwrap();
     env_logger::init();
 
+    async fn handle_subscription(mut message: JsonMessage<TestMessage>) {
+        message.ack().await.unwrap();
+    }
+
     let app = Application::new()
         .listen(
             "test-topic",
@@ -20,6 +24,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
             |mut message: JsonMessage<TestMessage>| async move {
                 message.ack().await.unwrap();
             }
+        )
+        .listen(
+            "test-topic",
+            "test-subscription",
+            || async {
+                println!("New message received");
+            }
+        )
+        .listen(
+            "test-topic",
+            "test-subscription",
+            handle_subscription
         )
         .start()
         .await?;

@@ -1,8 +1,5 @@
 use google_cloud::pubsub::{Client, Subscription, SubscriptionConfig, Topic, TopicConfig};
 
-#[macro_use]
-extern crate async_trait;
-
 pub use application::*;
 pub use message::*;
 

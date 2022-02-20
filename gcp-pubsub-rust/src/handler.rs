@@ -1,48 +1,67 @@
-use crate::JsonMessage;
+use crate::{FromMessage};
 use futures::future::BoxFuture;
 use google_cloud::pubsub::Message;
-use serde::Deserialize;
 use std::future::Future;
 use std::marker::PhantomData;
-use std::sync::Arc;
-use tokio::sync::Mutex;
 
-pub trait MessageHandler: Send {
+pub trait RawHandler: Send {
     fn on_message(&self, message: Message) -> BoxFuture<'static, ()>;
 }
 
-pub struct JsonMessageHandler<T, F, Fut> {
-    function: F,
-    phantom_body: PhantomData<Mutex<T>>,
-    phantom_future: PhantomData<Mutex<Fut>>,
+pub trait HandlerFuture: Future<Output=()> + Send + 'static {}
+
+impl<F> HandlerFuture for F where F: Future<Output=()> + Send + 'static {}
+
+pub trait Handler<T, Fut>: Send + 'static
+where
+    Fut: HandlerFuture
+{
+    fn call(&self, param: T) -> Fut;
 }
 
-impl<T, F, Fut> MessageHandler for JsonMessageHandler<T, F, Fut>
-    where
-        T: for<'de> Deserialize<'de> + Send,
-        F: Fn(JsonMessage<T>) -> Fut + Send + 'static,
-        Fut: Future<Output=()> + Send + 'static,
+impl<Fut, F> Handler<(), Fut> for F
+where
+    Fut: HandlerFuture,
+    F: Fn() -> Fut + Send + 'static,
 {
-    fn on_message(&self, message: Message) -> BoxFuture<'static, ()> {
-        let message = JsonMessage::try_from(message).expect("Failed to deserialize message");
-
-        Box::pin((self.function)(message))
+    fn call(&self, _param: ()) -> Fut {
+        self()
     }
 }
 
-impl<T, F, Fut> From<F> for JsonMessageHandler<T, F, Fut>
-    where
-        T: for<'de> Deserialize<'de> + Send,
-        F: Fn(JsonMessage<T>) -> Fut + Send + 'static,
-        Fut: Future<Output=()> + Send + 'static,
+impl<Fut, F, T> Handler<(T,), Fut> for F
+where
+    Fut: HandlerFuture,
+    F: Fn(T) -> Fut + Send + 'static,
 {
-    fn from(function: F) -> Self {
+    fn call(&self, param: (T,)) -> Fut {
+        self(param.0)
+    }
+}
+
+pub struct Extract<T, Fut, H> {
+    handler: H,
+    phantom_data: PhantomData<(T, Fut)>
+}
+
+impl<T, Fut, H> Extract<T, Fut, H> {
+    pub fn new(handler: H) -> Self {
         Self {
-            function,
-            phantom_body: PhantomData,
-            phantom_future: PhantomData,
+            handler,
+            phantom_data: PhantomData,
         }
     }
 }
 
+impl<T, Fut, H> RawHandler for Extract<T, Fut, H>
+where
+    T: FromMessage + Send,
+    Fut: HandlerFuture,
+    H: Handler<T, Fut>
+{
+    fn on_message(&self, message: Message) -> BoxFuture<'static, ()> {
+        let message = T::from_message(message).expect("Failed to convert message");
 
+        Box::pin(self.handler.call(message))
+    }
+}
