@@ -1,0 +1,12 @@
+[package]
+name = "geometry-crash"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bevy = { version = "0.6.0", features = ["dynamic"] }
+bevy_rapier2d = "0.12.1"
+dotenv = "0.15.0"
+log = "0.4.14"
