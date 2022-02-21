@@ -82,7 +82,7 @@ async fn create_subscription_handle(mut client: Client, listener: Listener, tx: 
                 if let Some(message) = message {
                     log::info!(target: topic.id(), "Received message: {}", String::from_utf8_lossy(message.data()));
                     let future = listener.handler.on_message(message);
-                    future.await
+                    future.await.0.expect("Error while processing message");
                 }
             } else {
                 break;

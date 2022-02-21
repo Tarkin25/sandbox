@@ -1,39 +1,31 @@
-use crate::{FromMessage};
+use crate::{FromMessage, ProcessingResult};
 use futures::future::BoxFuture;
 use google_cloud::pubsub::Message;
 use std::future::Future;
 use std::marker::PhantomData;
 
 pub trait RawHandler: Send {
-    fn on_message(&self, message: Message) -> BoxFuture<'static, ()>;
+    fn on_message(&self, message: Message) -> BoxFuture<'static, ProcessingResult>;
 }
 
-pub trait HandlerFuture: Future<Output=()> + Send + 'static {}
+pub trait HandlerFuture: Future<Output=ProcessingResult> + Send + 'static {}
 
-impl<F> HandlerFuture for F where F: Future<Output=()> + Send + 'static {}
+impl<F> HandlerFuture for F where F: Future<Output=ProcessingResult> + Send + 'static {}
 
-pub trait Handler<T, Fut>: Send + 'static
-where
-    Fut: HandlerFuture
+pub trait Handler<T>: Send + 'static
 {
-    fn call(&self, param: T) -> Fut;
+    type Future: HandlerFuture;
+
+    fn call(&self, param: T) -> Self::Future;
 }
 
-impl<Fut, F> Handler<(), Fut> for F
-where
-    Fut: HandlerFuture,
-    F: Fn() -> Fut + Send + 'static,
-{
-    fn call(&self, _param: ()) -> Fut {
-        self()
-    }
-}
-
-impl<Fut, F, T> Handler<(T,), Fut> for F
+impl<Fut, F, T> Handler<(T,)> for F
 where
     Fut: HandlerFuture,
     F: Fn(T) -> Fut + Send + 'static,
 {
+    type Future = Fut;
+
     fn call(&self, param: (T,)) -> Fut {
         self(param.0)
     }
@@ -57,9 +49,9 @@ impl<T, Fut, H> RawHandler for Extract<T, Fut, H>
 where
     T: FromMessage + Send,
     Fut: HandlerFuture,
-    H: Handler<T, Fut>
+    H: Handler<T, Future=Fut>
 {
-    fn on_message(&self, message: Message) -> BoxFuture<'static, ()> {
+    fn on_message(&self, message: Message) -> BoxFuture<'static, ProcessingResult> {
         let message = T::from_message(message).expect("Failed to convert message");
 
         Box::pin(self.handler.call(message))

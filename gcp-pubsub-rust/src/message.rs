@@ -3,6 +3,39 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use std::error::Error;
 
+#[async_trait]
+pub trait MessageFacade {
+    fn message(&self) -> &Message;
+
+    fn message_mut(&mut self) -> &mut Message;
+
+    fn id(&self) -> &str {
+        self.message().id()
+    }
+
+    fn data(&self) -> &[u8] {
+        self.message().data()
+    }
+
+    fn attributes(&self) -> &HashMap<String, String> {
+        self.message().attributes()
+    }
+
+    fn publish_time(&self) -> chrono::NaiveDateTime {
+        self.message().publish_time()
+    }
+
+    async fn ack(mut self) -> ProcessingResult where Self: Sized {
+        ProcessingResult(self.message_mut().ack().await)
+    }
+
+    async fn nack(mut self) -> ProcessingResult where Self: Sized {
+        ProcessingResult(self.message_mut().nack().await)
+    }
+}
+
+pub struct ProcessingResult(pub(crate) Result<(), google_cloud::error::Error>);
+
 pub trait FromMessage: Sized {
     fn from_message(message: Message) -> Result<Self, Box<dyn std::error::Error>>;
 }
@@ -43,29 +76,15 @@ impl<T> JsonMessage<T>
     pub fn into_body(self) -> T {
         self.body
     }
+}
 
-    pub fn id(&self) -> &str {
-        self.message.id()
+impl<T> MessageFacade for JsonMessage<T> {
+    fn message(&self) -> &Message {
+        &self.message
     }
 
-    pub fn data(&self) -> &[u8] {
-        self.message.data()
-    }
-
-    pub fn attributes(&self) -> &HashMap<String, String> {
-        self.message.attributes()
-    }
-
-    pub fn publish_time(&self) -> chrono::NaiveDateTime {
-        self.message.publish_time()
-    }
-
-    pub async fn ack(&mut self) -> Result<(), google_cloud::error::Error> {
-        self.message.ack().await
-    }
-
-    pub async fn nack(&mut self) -> Result<(), google_cloud::error::Error> {
-        self.message.nack().await
+    fn message_mut(&mut self) -> &mut Message {
+        &mut self.message
     }
 }
 

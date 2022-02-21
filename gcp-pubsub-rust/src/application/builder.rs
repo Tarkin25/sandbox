@@ -1,6 +1,5 @@
-use std::future::Future;
 use crate::application::Listener;
-use crate::{Application, FromMessage};
+use crate::{Application, FromMessage, HandlerFuture};
 use crate::handler::{Extract, Handler, RawHandler};
 
 #[derive(Default)]
@@ -30,8 +29,8 @@ impl ApplicationBuilder {
     pub fn listen<T, Fut, H>(self, topic: impl Into<String>, subscription: impl Into<String>, handler: H) -> Self
     where
         T: FromMessage + Send + 'static,
-        Fut: Future<Output = ()> + Send + 'static,
-        H: Handler<T, Fut>,
+        Fut: HandlerFuture,
+        H: Handler<T, Future=Fut>,
     {
         self.add_listener(topic, subscription, Extract::new(handler))
     }

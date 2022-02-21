@@ -2,6 +2,10 @@ use google_cloud::pubsub::{Client, Subscription, SubscriptionConfig, Topic, Topi
 
 pub use application::*;
 pub use message::*;
+pub use crate::handler::{Handler, HandlerFuture};
+
+#[macro_use]
+extern crate async_trait;
 
 mod application;
 mod message;
