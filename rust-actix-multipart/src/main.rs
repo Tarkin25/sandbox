@@ -101,6 +101,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .route("/file-upload", post().to(handle_multipart))
+            .route("/gugus", post().to(|| {}))
     })
         .bind("localhost:7878")?
         .run()

@@ -7,16 +7,8 @@ use futures::{TryStreamExt};
 use tokio::sync::broadcast;
 use tokio::sync::broadcast::Sender;
 use tokio::task::JoinHandle;
-use crate::application::builder::ApplicationBuilder;
-use crate::handler::{RawHandler};
 
 pub use builder::*;
-
-pub(crate) struct Listener {
-    topic: String,
-    subscription: String,
-    handler: Box<dyn RawHandler>,
-}
 
 pub struct Application {
     client: Client,

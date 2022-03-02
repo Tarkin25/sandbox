@@ -1,7 +1,9 @@
 use gcp_pubsub_rust::{Application, Handler, JsonMessage, MessageFacade, ProcessingResult};
 use serde::Deserialize;
 use std::error::Error;
+use std::future::Future;
 use futures::future::BoxFuture;
+use google_cloud::pubsub::Message;
 use tokio::signal;
 
 #[derive(Deserialize)]
@@ -18,33 +20,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
         message.ack().await
     }
 
-    struct MyHandler;
-
-    impl Handler<JsonMessage<TestMessage>> for MyHandler {
-        type Future = BoxFuture<'static, ProcessingResult>;
-
-        fn call(&self, message: JsonMessage<TestMessage>) -> Self::Future {
-            Box::pin(message.ack())
-        }
-    }
-
     let app = Application::new()
         .listen(
             "test-topic",
             "test-subscription",
-            |message: JsonMessage<TestMessage>| async move {
-                message.ack().await
-            }
-        )
-        .listen(
-            "test-topic",
-            "test-subscription",
             handle_subscription
-        )
-        .listen(
-            "test-topic",
-            "test-subscription",
-            MyHandler
         )
         .start()
         .await?;

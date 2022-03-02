@@ -1,6 +1,11 @@
-use crate::application::Listener;
 use crate::{Application, FromMessage, HandlerFuture};
 use crate::handler::{Extract, Handler, RawHandler};
+
+pub(crate) struct Listener {
+    pub(crate) topic: String,
+    pub(crate) subscription: String,
+    pub(crate) handler: Box<dyn RawHandler>,
+}
 
 #[derive(Default)]
 pub struct ApplicationBuilder {
