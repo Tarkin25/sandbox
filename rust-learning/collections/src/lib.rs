@@ -1,3 +1,5 @@
+pub mod linked_list;
+
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::ops::Deref;
@@ -61,7 +63,7 @@ impl<T> LinkedList<T> {
     }
 }
 
-impl<'a, T: 'a> Iterator for Iter<'a, T> {
+/*impl<'a, T: 'a> Iterator for Iter<'a, T> {
     type Item = &'a T;
 
     fn next(&mut self) -> Option<&'a T> {
@@ -75,4 +77,4 @@ impl<'a, T: 'a> Iterator for Iter<'a, T> {
             None
         }
     }
-}
+}*/
