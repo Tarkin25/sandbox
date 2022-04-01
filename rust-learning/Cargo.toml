@@ -27,4 +27,5 @@ members = [
     "observer",
     "functional",
     "linked-vec",
+    "state-machine",
 ]
