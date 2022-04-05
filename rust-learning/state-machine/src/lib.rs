@@ -3,7 +3,7 @@ trait State {
 
     fn update(&mut self, shared: &mut Shared) -> Option<Box<dyn State>>;
 
-    fn exit(&mut self, shared: &mut Shared);
+    fn exit(self: Box<Self>, shared: &mut Shared);
 }
 
 struct Shared {
@@ -18,8 +18,8 @@ struct StateMachine {
 impl StateMachine {
     fn update(&mut self) {
         if let Some(new_state) = self.state.update(&mut self.shared) {
-            self.state.exit(&mut self.shared);
-            self.state = new_state;
+            let old_state = std::mem::replace(&mut self.state, new_state);
+            old_state.exit(&mut self.shared);
             self.state.enter(&mut self.shared);
         }
     }
