@@ -1,9 +1,9 @@
-use std::any::type_name;
+use anyhow::Context;
 use google_cloud::pubsub::Message;
 use serde::Deserialize;
+use std::any::type_name;
 use std::collections::HashMap;
 use std::error::Error;
-use anyhow::Context;
 
 #[async_trait]
 pub trait MessageFacade {
@@ -27,11 +27,17 @@ pub trait MessageFacade {
         self.message().publish_time()
     }
 
-    async fn ack(mut self) -> ProcessingSignal where Self: Sized {
+    async fn ack(mut self) -> ProcessingSignal
+    where
+        Self: Sized,
+    {
         ProcessingSignal(self.message_mut().ack().await)
     }
 
-    async fn nack(mut self) -> ProcessingSignal where Self: Sized {
+    async fn nack(mut self) -> ProcessingSignal
+    where
+        Self: Sized,
+    {
         ProcessingSignal(self.message_mut().nack().await)
     }
 }
@@ -56,21 +62,19 @@ impl FromMessage for () {
 
 impl<F> FromMessage for (F,)
 where
-    F: FromMessage
+    F: FromMessage,
 {
     fn from_message(message: Message) -> anyhow::Result<Self> {
         Ok((F::from_message(message)?,))
     }
 }
 
-pub struct JsonMessage<T>
-{
+pub struct JsonMessage<T> {
     message: Message,
     body: T,
 }
 
-impl<T> JsonMessage<T>
-{
+impl<T> JsonMessage<T> {
     pub fn body(&self) -> &T {
         &self.body
     }
@@ -92,11 +96,14 @@ impl<T> MessageFacade for JsonMessage<T> {
 
 impl<T> FromMessage for JsonMessage<T>
 where
-    T: Sized + for<'de> Deserialize<'de>
+    T: Sized + for<'de> Deserialize<'de>,
 {
     fn from_message(message: Message) -> anyhow::Result<Self> {
         Ok(Self {
-            body: serde_json::from_slice(message.data()).context(format!("Unable to deserialize JsonMessage<{}>", type_name::<T>()))?,
+            body: serde_json::from_slice(message.data()).context(format!(
+                "Unable to deserialize JsonMessage<{}>",
+                type_name::<T>()
+            ))?,
             message,
         })
     }

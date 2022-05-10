@@ -1,10 +1,10 @@
 mod builder;
 
-use anyhow::Context;
 use crate::{acquire_subscription, acquire_topic, ProcessingSignal};
-use google_cloud::pubsub::Client;
+use anyhow::Context;
 use futures::stream::FuturesUnordered;
-use futures::{TryStreamExt};
+use futures::TryStreamExt;
+use google_cloud::pubsub::Client;
 use tokio::sync::broadcast;
 use tokio::sync::broadcast::Sender;
 use tokio::task::JoinHandle;
@@ -31,11 +31,13 @@ impl Application {
         let tx_ref = &tx;
         let client_clone = client.clone();
 
-        let join_handles = listeners.into_iter()
+        let join_handles = listeners
+            .into_iter()
             .map(move |listener| create_subscription_handle(client_clone.clone(), listener, tx_ref))
             .collect::<FuturesUnordered<_>>()
             .try_collect::<Vec<_>>()
-            .await.context("Unable to create subscription handles")?;
+            .await
+            .context("Unable to create subscription handles")?;
 
         Ok(Self {
             client,
@@ -46,7 +48,9 @@ impl Application {
 
     pub async fn stop(self) -> anyhow::Result<()> {
         log::info!("Shutting down");
-        self.shutdown_sender.send(()).context("Unable to send shutdown signal")?;
+        self.shutdown_sender
+            .send(())
+            .context("Unable to send shutdown signal")?;
 
         for handle in self.join_handles {
             handle.await.context("Unable to await thread join handle")?;
@@ -56,20 +60,27 @@ impl Application {
     }
 }
 
-async fn create_subscription_handle(mut client: Client, listener: Listener, tx: &Sender<()>) -> anyhow::Result<JoinHandle<()>> {
-    let mut topic = acquire_topic(&mut client, &listener.topic).await.context("Unable to acquire topic")?;
+async fn create_subscription_handle(
+    mut client: Client,
+    listener: Listener,
+    tx: &Sender<()>,
+) -> anyhow::Result<JoinHandle<()>> {
+    let mut topic = acquire_topic(&mut client, &listener.topic)
+        .await
+        .context("Unable to acquire topic")?;
     let topic_id = topic.id().to_string();
-    let mut subscription =
-        acquire_subscription(&mut client, &mut topic, &listener.subscription).await.context("Unable to acquire subscription")?;
+    let mut subscription = acquire_subscription(&mut client, &mut topic, &listener.subscription)
+        .await
+        .context("Unable to acquire subscription")?;
     let subscription_id = subscription.id().to_string();
     let mut rx = tx.subscribe();
 
     let handle = tokio::spawn(async move {
         loop {
             let message = tokio::select! {
-                        message = subscription.receive() => Some(message),
-                        _ = rx.recv() => None,
-                    };
+                message = subscription.receive() => Some(message),
+                _ = rx.recv() => None,
+            };
 
             if let Some(message) = message {
                 if let Some(message) = message {
@@ -79,8 +90,12 @@ async fn create_subscription_handle(mut client: Client, listener: Listener, tx: 
                     let result = future.await;
 
                     match result {
-                        Ok(ProcessingSignal(Err(signal_error))) => log::error!(target: topic.id(), "Error while ack-/nacking message: {}", signal_error),
-                        Err(handle_error) => log::error!(target: topic.id(), "Error while handling message: {:?}", handle_error),
+                        Ok(ProcessingSignal(Err(signal_error))) => {
+                            log::error!(target: topic.id(), "Error while ack-/nacking message: {}", signal_error)
+                        }
+                        Err(handle_error) => {
+                            log::error!(target: topic.id(), "Error while handling message: {:?}", handle_error)
+                        }
                         _ => {}
                     }
                 }
@@ -91,10 +106,10 @@ async fn create_subscription_handle(mut client: Client, listener: Listener, tx: 
     });
 
     log::info!(
-                "Listening for messages on topic '{}' using subscription '{}'",
-                topic_id,
-                subscription_id
-            );
+        "Listening for messages on topic '{}' using subscription '{}'",
+        topic_id,
+        subscription_id
+    );
 
     Ok(handle)
 }

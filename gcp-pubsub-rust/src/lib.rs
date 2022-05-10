@@ -1,15 +1,15 @@
 use google_cloud::pubsub::{Client, Subscription, SubscriptionConfig, Topic, TopicConfig};
 
+pub use crate::handler::{Handler, HandlerFuture};
 pub use application::*;
 pub use message::*;
-pub use crate::handler::{Handler, HandlerFuture};
 
 #[macro_use]
 extern crate async_trait;
 
 mod application;
-mod message;
 mod handler;
+mod message;
 
 pub async fn acquire_topic(
     client: &mut Client,

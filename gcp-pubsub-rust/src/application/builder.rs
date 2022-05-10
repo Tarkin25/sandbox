@@ -1,5 +1,5 @@
-use crate::{Application, FromMessage, HandlerFuture};
 use crate::handler::{Extract, Handler, RawHandler};
+use crate::{Application, FromMessage, HandlerFuture};
 
 pub(crate) struct Listener {
     pub(crate) topic: String,
@@ -21,21 +21,31 @@ impl ApplicationBuilder {
         Application::start(self).await
     }
 
-    fn add_listener<T: RawHandler + 'static>(mut self, topic: impl Into<String>, subscription: impl Into<String>, handler: T) -> Self {
+    fn add_listener<T: RawHandler + 'static>(
+        mut self,
+        topic: impl Into<String>,
+        subscription: impl Into<String>,
+        handler: T,
+    ) -> Self {
         self.listeners.push(Listener {
             topic: topic.into(),
             subscription: subscription.into(),
-            handler: Box::new(handler)
+            handler: Box::new(handler),
         });
 
         self
     }
 
-    pub fn listen<T, Fut, H>(self, topic: impl Into<String>, subscription: impl Into<String>, handler: H) -> Self
+    pub fn listen<T, Fut, H>(
+        self,
+        topic: impl Into<String>,
+        subscription: impl Into<String>,
+        handler: H,
+    ) -> Self
     where
         T: FromMessage + Send + 'static,
         Fut: HandlerFuture,
-        H: Handler<T, Future=Fut>,
+        H: Handler<T, Future = Fut>,
     {
         self.add_listener(topic, subscription, Extract::new(handler))
     }
