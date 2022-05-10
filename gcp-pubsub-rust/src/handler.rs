@@ -1,16 +1,17 @@
-use crate::{FromMessage, ProcessingResult};
+use crate::{FromMessage, ProcessingSignal};
 use futures::future::BoxFuture;
 use google_cloud::pubsub::Message;
 use std::future::Future;
 use std::marker::PhantomData;
+use anyhow::Context;
 
 pub trait RawHandler: Send {
-    fn on_message(&self, message: Message) -> BoxFuture<'static, ProcessingResult>;
+    fn on_message(&self, message: Message) -> BoxFuture<'static, anyhow::Result<ProcessingSignal>>;
 }
 
-pub trait HandlerFuture: Future<Output=ProcessingResult> + Send + 'static {}
+pub trait HandlerFuture: Future<Output=anyhow::Result<ProcessingSignal>> + Send + 'static {}
 
-impl<F> HandlerFuture for F where F: Future<Output=ProcessingResult> + Send + 'static {}
+impl<F> HandlerFuture for F where F: Future<Output=anyhow::Result<ProcessingSignal>> + Send + 'static {}
 
 pub trait Handler<T>: Send + 'static
 {
@@ -51,9 +52,12 @@ where
     Fut: HandlerFuture,
     H: Handler<T, Future=Fut>
 {
-    fn on_message(&self, message: Message) -> BoxFuture<'static, ProcessingResult> {
-        let message = T::from_message(message).expect("Failed to convert message");
+    fn on_message(&self, message: Message) -> BoxFuture<'static, anyhow::Result<ProcessingSignal>> {
+        let message_result = T::from_message(message).context("Failed to extract message");
 
-        Box::pin(self.handler.call(message))
+        match message_result {
+            Ok(message) => Box::pin(self.handler.call(message)),
+            Err(extraction_error) => Box::pin(async { Err(extraction_error) })
+        }
     }
 }

@@ -1,6 +1,7 @@
 mod builder;
 
-use crate::{acquire_subscription, acquire_topic};
+use anyhow::Context;
+use crate::{acquire_subscription, acquire_topic, ProcessingSignal};
 use google_cloud::pubsub::Client;
 use futures::stream::FuturesUnordered;
 use futures::{TryStreamExt};
@@ -21,8 +22,8 @@ impl Application {
         ApplicationBuilder::new()
     }
 
-    async fn start(builder: ApplicationBuilder) -> Result<Self, Box<dyn std::error::Error>> {
-        let client = Client::new().await?;
+    async fn start(builder: ApplicationBuilder) -> anyhow::Result<Self> {
+        let client = Client::new().await.context("Unable to create client")?;
 
         let listeners = builder.listeners;
         let (tx, _rx) = broadcast::channel::<()>(listeners.len());
@@ -34,7 +35,7 @@ impl Application {
             .map(move |listener| create_subscription_handle(client_clone.clone(), listener, tx_ref))
             .collect::<FuturesUnordered<_>>()
             .try_collect::<Vec<_>>()
-            .await?;
+            .await.context("Unable to create subscription handles")?;
 
         Ok(Self {
             client,
@@ -43,23 +44,23 @@ impl Application {
         })
     }
 
-    pub async fn stop(self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn stop(self) -> anyhow::Result<()> {
         log::info!("Shutting down");
-        self.shutdown_sender.send(())?;
+        self.shutdown_sender.send(()).context("Unable to send shutdown signal")?;
 
         for handle in self.join_handles {
-            handle.await?;
+            handle.await.context("Unable to await thread join handle")?;
         }
 
         Ok(())
     }
 }
 
-async fn create_subscription_handle(mut client: Client, listener: Listener, tx: &Sender<()>) -> Result<JoinHandle<()>, Box<dyn std::error::Error>> {
-    let mut topic = acquire_topic(&mut client, &listener.topic).await?;
+async fn create_subscription_handle(mut client: Client, listener: Listener, tx: &Sender<()>) -> anyhow::Result<JoinHandle<()>> {
+    let mut topic = acquire_topic(&mut client, &listener.topic).await.context("Unable to acquire topic")?;
     let topic_id = topic.id().to_string();
     let mut subscription =
-        acquire_subscription(&mut client, &mut topic, &listener.subscription).await?;
+        acquire_subscription(&mut client, &mut topic, &listener.subscription).await.context("Unable to acquire subscription")?;
     let subscription_id = subscription.id().to_string();
     let mut rx = tx.subscribe();
 
@@ -74,7 +75,14 @@ async fn create_subscription_handle(mut client: Client, listener: Listener, tx: 
                 if let Some(message) = message {
                     log::info!(target: topic.id(), "Received message: {}", String::from_utf8_lossy(message.data()));
                     let future = listener.handler.on_message(message);
-                    future.await.0.expect("Error while processing message");
+
+                    let result = future.await;
+
+                    match result {
+                        Ok(ProcessingSignal(Err(signal_error))) => log::error!(target: topic.id(), "Error while ack-/nacking message: {}", signal_error),
+                        Err(handle_error) => log::error!(target: topic.id(), "Error while handling message: {:?}", handle_error),
+                        _ => {}
+                    }
                 }
             } else {
                 break;

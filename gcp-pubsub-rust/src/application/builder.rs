@@ -17,7 +17,7 @@ impl ApplicationBuilder {
         Self { listeners: vec![] }
     }
 
-    pub async fn start(self) -> Result<Application, Box<dyn std::error::Error>> {
+    pub async fn start(self) -> anyhow::Result<Application> {
         Application::start(self).await
     }
 
